@@ -1,0 +1,93 @@
+'''
+Лабораторная №6
+Задание состоит из двух частей.
+1 часть – написать программу в соответствии со своим вариантом задания.
+Написать 2 варианта формирования (алгоритмический и с помощью функций Питона), сравнив по времени их выполнение.
+2 часть – усложнить написанную программу, введя по своему усмотрению в условие минимум одно ограничение на характеристики объектов
+(которое будет сокращать количество переборов)  и целевую функцию для нахождения оптимального  решения.
+Вариант 20
+Дан одномерный массив. 
+Сформировать все возможные варианты данного массива путем замены положительных элементов на четных местах на нули.
+'''
+import time
+import itertools
+
+result = []
+masks = []
+
+# Функция для генерации различных списков
+# На вход поступает основной список чисел и список ячеек, куда можно поставить нули
+# Берем маску и перемножаем ее с нашим основным списком,
+# Если в маске значение '0', то после умножения в основном списке тоже будет '0'
+# Если в маске значение '1', то после умножения в основном списке останется тоже самое значение
+def gen_lists(orig_list: list, cells: list):
+    global result, masks
+    for i in masks:
+        sub_list = [e for e in orig_list]
+        for k in range(len(i)):
+            sub_list[cells[k]] *= i[k]
+        result.append(sub_list)
+    print("Исходный список: ", orig_list)
+    #print("Ячейки, которые можно заменить: ", cells)
+# Функция для генерации маски списка
+def gen_masks(mask: list, next_cell=0):
+    global masks
+    #print("gen mask: ", mask, next_cell)
+    masks.append(mask)
+    #print("Исходная маска: ", masks)
+
+    # Если следующая ячейка достигла конца - завершаем функцию
+    if next_cell == len(mask):
+        return 0
+    # Иначе цикл, который будет перебирать все индексы маски
+    for i in range(next_cell, len(mask)):
+        sub_mask = [i for i in mask]
+        sub_mask[i] = 0
+        gen_masks([i for i in sub_mask], i + 1)
+
+# Функция для нахождения ячеек в списке
+# Ячейка - это место, куда можно поставить 0
+def find_cells(orig_list: list, difficult=0):
+    l = [i for i in range(0, len(orig_list), 2)] # в l хранятся четные индексы
+    #print("Четные индексы: ", l)
+    if difficult == 0:
+        print("Условие - положительные числа на четных местах")
+        return list(filter(lambda x: orig_list[x] > 0, l))
+    if difficult == 1:
+        print("Условие - положительные и четные числа на четных местах")
+        return list(filter(lambda x: orig_list[x] > 0 and orig_list[x] % 2 == 0, l))
+
+if __name__ == "__main__":
+    print("Введите числа через пробел: ")
+    input_list = [int(i) for i in input().split(" ")]
+
+    cells = find_cells(input_list, difficult=0)  # Находим ячейки, которые можно изменить
+    print("Ячейки, которые можно заменить: ", cells)
+    print("\n")
+
+    t_algo, t_python = 0, 0
+    # Начало работы алгоритмического формирования
+    t_start = time.monotonic()
+
+    mask = [1] * len(cells)  # Создаем входную маску генерируем маску из '1' = cells
+    gen_masks(mask)  # Генерируем всевозможные маски
+    gen_lists(input_list, cells)
+
+    t_algo = time.monotonic() - t_start
+
+    print(f"Время выполнения aлгоритмическое формирование: {t_algo:.30f}\nРезультат:")
+    print(*result, sep="\n")
+    print("\n")
+
+    result = []
+    # Начало работы функции питона
+    t_start = time.monotonic()
+
+    masks = list(itertools.product([0, 1], repeat=len(cells))) # подаем список элементов [0, 1] по длине cells
+    gen_lists(input_list, cells)
+
+    t_python = time.monotonic() - t_start
+
+    print(f"Время выполнения функции питона {t_python:.30f}\nРезультат:")
+    print(*result, sep="\n")
+    print(f"Разница во времени: {t_algo - t_python:.30f}")
